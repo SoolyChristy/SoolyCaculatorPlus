@@ -144,6 +144,10 @@ fileprivate extension HomeViewController {
         // 获取 当前显示最后一个字符
         let lastCharacter = displayString.lastCharacter()
         
+        if lastCharacter == ")" {
+            return
+        }
+        
         // 如果 字符为数字
         if Int(lastCharacter) != nil || lastCharacter == "." {
             
@@ -269,6 +273,11 @@ fileprivate extension HomeViewController {
         }
         /// 左括号
         func leftBracketBtnClick() {
+            if let _ = Int(displayString.lastCharacter()) {
+                let btn = UIButton()
+                btn.setTitle("x", for: .normal)
+                operatorBtnClick(btn: btn)
+            }
             displayString += "("
             textView.text = displayString
             
@@ -473,8 +482,8 @@ extension HomeViewController {
     private func setupTextView() {
         textView.frame = CGRect(x: 0, y: 20, width: screenWidth, height: screenHeight - 5 * btnHeight - 20)
         textView.backgroundColor = view.backgroundColor
-        textView.textColor = UIColor.white
-        textView.tintColor = UIColor.white
+        textView.textColor = .white
+        textView.tintColor = .white
         textView.font = UIFont.systemFont(ofSize: 35)
         textView.inputView = UIView(frame: CGRect())
         

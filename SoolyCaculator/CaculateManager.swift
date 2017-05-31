@@ -55,7 +55,7 @@ struct CaculateManager {
     ///   - numbers: 操作数数组
     func caculateSystem( operators: inout [String], numbers: inout [NSDecimalNumber]) -> NSDecimalNumber {
         
-        var result: NSDecimalNumber = 0
+        var result: NSDecimalNumber = numbers[0]
         while operators.count != 0 {
             if operators.count == 1 {
                 result = caculate(number1: numbers[0], number2: numbers[1], type: operators[0])
