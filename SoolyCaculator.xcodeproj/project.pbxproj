@@ -110,14 +110,12 @@
 				70BBE3DA1ED951E1001D742F /* Header.swift */,
 			);
 			name = Resource;
-			path = SoolyCaculator;
 			sourceTree = "<group>";
 		};
 		70BBE3A01ED9248A001D742F = {
 			isa = PBXGroup;
 			children = (
 				70BBE3AB1ED9248A001D742F /* SoolyCaculator */,
-				70809ACB1EDA99AF001628E8 /* Resource */,
 				70BBE3C01ED9248B001D742F /* SoolyCaculatorTests */,
 				70BBE3CB1ED9248C001D742F /* SoolyCaculatorUITests */,
 				70BBE3AA1ED9248A001D742F /* Products */,
@@ -143,6 +141,7 @@
 				70262E201EDC39390079ACD2 /* Extensions */,
 				70BBE3B01ED9248B001D742F /* Main.storyboard */,
 				70BBE3B51ED9248B001D742F /* LaunchScreen.storyboard */,
+				70809ACB1EDA99AF001628E8 /* Resource */,
 			);
 			path = SoolyCaculator;
 			sourceTree = "<group>";
