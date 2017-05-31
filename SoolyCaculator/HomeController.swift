@@ -21,12 +21,13 @@ class HomeViewController: UIViewController {
     var numbers = [NSDecimalNumber]()
     /// 操作符
     var operators = [String]()
+    /// 左括号索引
+    var bracketIndexs = [Int]()
     /// 运算结果
     var result: NSDecimalNumber = 0
     /// MS
     var memmory: NSDecimalNumber?
     
-    var bracketCount = 0
     var isFinishCaculate = false
     var isDeleting = false
     var isBracket = false
@@ -39,6 +40,7 @@ class HomeViewController: UIViewController {
     func cleanData() {
         numbers.removeAll()
         operators.removeAll()
+        bracketIndexs.removeAll()
         
         isDeleting = false
         isBracket = false
@@ -56,65 +58,70 @@ fileprivate extension HomeViewController {
         guard let title = btn.titleLabel?.text else {
             return
         }
+        /// AC
+        func acClick() {
+            currentNum = ""
+            displayString = ""
+            cleanData()
+            textView.text = displayString
+        }
+        /// MS
+        func msClick() {
+            if currentNum == "" {
+                return
+            }
+            memmory = NSDecimalNumber(string: currentNum)
+            print("保存成功 - \(currentNum)")
+        }
+        /// MR
+        func mrClick() {
+            guard let memory = memmory else {
+                return
+            }
+            currentNum = "\(memory)"
+            displayString += currentNum
+            textView.text = displayString
+            print("读取成功 - \(currentNum)")
+        }
+        /// M+
+        func mPlusClick() {
+            guard let memory = memmory else {
+                return
+            }
+            let displayNum = NSDecimalNumber(string: currentNum)
+            if displayNum == NSDecimalNumber.notANumber {
+                return
+            }
+            currentNum = memory.adding(displayNum).stringValue
+            displayString = currentNum
+            textView.text = displayString
+        }
+        /// M-
+        func mMinusClick() {
+            guard let memory = memmory else {
+                return
+            }
+            let displayNum = NSDecimalNumber(string: currentNum)
+            if displayNum == NSDecimalNumber.notANumber {
+                return
+            }
+            
+            currentNum = memory.subtracting(displayNum).stringValue
+            displayString = currentNum
+            textView.text = displayString
+        }
         
         switch title {
         case "AC":
-            
-            func acClick() {
-                currentNum = ""
-                displayString = ""
-                cleanData()
-                textView.text = displayString
-            }
+            acClick()
         case "MS":
-            
-            func msClick() {
-                if currentNum == "" {
-                    return
-                }
-                memmory = NSDecimalNumber(string: currentNum)
-                print("保存成功 - \(currentNum)")
-            }
+            msClick()
         case "MR":
-            
-            func mrClick() {
-                guard let memory = memmory else {
-                    return
-                }
-                currentNum = "\(memory)"
-                displayString += currentNum
-                textView.text = displayString
-                print("读取成功 - \(currentNum)")
-            }
+            mrClick()
         case "M+":
-            
-            func mPlusClick() {
-                guard let memory = memmory else {
-                    return
-                }
-                let displayNum = NSDecimalNumber(string: currentNum)
-                if displayNum == NSDecimalNumber.notANumber {
-                    return
-                }
-                currentNum = memory.adding(displayNum).stringValue
-                displayString = currentNum
-                textView.text = displayString
-            }
+            mPlusClick()
         case "M-":
-            
-            func mMinusClick() {
-                guard let memory = memmory else {
-                    return
-                }
-                let displayNum = NSDecimalNumber(string: currentNum)
-                if displayNum == NSDecimalNumber.notANumber {
-                    return
-                }
-                
-                currentNum = memory.subtracting(displayNum).stringValue
-                displayString = currentNum
-                textView.text = displayString
-            }
+            mMinusClick()
         default:
             return
         }
@@ -255,36 +262,51 @@ fileprivate extension HomeViewController {
     }
     
     /// 点击括号键
-    @objc func bracketsBtnClick() {
+    @objc func bracketsBtnClick(btn: UIButton) {
         
         if isFinishCaculate {
             return
         }
-        
-        if bracketCount == 0 {
+        /// 左括号
+        func leftBracketBtnClick() {
             displayString += "("
             textView.text = displayString
             
             operators.append("(")
             
-            bracketCount += 1
-        }else if bracketCount == 1 {
+            // 添加括号索引
+            bracketIndexs.append(operators.count - 1)
+        }
+        /// 右括号
+        func rightBracketBtnClick() {
+            if bracketIndexs.count == 0 {
+                return
+            }
+            
             let number = NSDecimalNumber(string: currentNum)
             if number == NSDecimalNumber.notANumber {
                 return
             }
             
-            numbers.append(number)
+            if displayString.lastCharacter() != ")" {
+                numbers.append(number)
+            }
             operators.append(")")
             
             displayString += ")"
             textView.text = displayString
             
-            caculateBracketContents()
+            // 计算括号内容
+            CaculateManager.shared.caculateBracketContents(operators: &operators,
+                                                           numbers: &numbers,
+                                                           bracketIndex: bracketIndexs.last!,
+                                                           bracketCount: bracketIndexs.count)
+            
             isBracket = true
-            bracketCount -= 1
+            bracketIndexs.removeLast()
         }
         
+        btn.tag == 1 ? leftBracketBtnClick() : rightBracketBtnClick()
     }
     
     /// 点击等号键
@@ -298,10 +320,19 @@ fileprivate extension HomeViewController {
             return
         }
         
-        if !isDeleting {
-            numbers.append(number)
+        // 若用户没有输入完括号
+        if bracketIndexs.count > 0 {
+            for _ in 0..<bracketIndexs.count {
+                let btn = UIButton()
+                btn.tag = 2
+                bracketsBtnClick(btn: btn)
+            }
+        } else {
+            if !isDeleting {
+                numbers.append(number)
+            }
+            currentNum = ""
         }
-        currentNum = ""
         
         result = CaculateManager.shared.caculateSystem(operators: &operators, numbers: &numbers)
         
@@ -351,10 +382,18 @@ extension HomeViewController {
         // 零
         let zeroBtn = UIButton(title: "0")
         
-        zeroBtn.frame = CGRect(x: 0, y: 4 * btnHeight, width: btnWidth * 2, height: btnHeight)
+        zeroBtn.frame = CGRect(x: 0, y: 4 * btnHeight, width: btnWidth, height: btnHeight)
         zeroBtn.addTarget(self, action: #selector(numBtnClick(btn:)), for: .touchUpInside)
         
         keyboardView.addSubview(zeroBtn)
+        
+        // .
+        let pointBtn = UIButton(title: ".")
+        
+        pointBtn.frame = CGRect(x: btnWidth, y: 4 * btnHeight, width: btnWidth, height: btnHeight)
+        pointBtn.addTarget(self, action: #selector(pointBtnClick), for: .touchUpInside)
+        
+        keyboardView.addSubview(pointBtn)
     }
     
     /// 运算符
@@ -378,18 +417,10 @@ extension HomeViewController {
             keyboardView.addSubview(btn)
         }
         
-        // .
-        let pointBtn = UIButton(title: ".")
-        
-        pointBtn.frame = CGRect(x: 2 * btnWidth, y: 4 * btnHeight, width: btnWidth, height: btnHeight)
-        pointBtn.addTarget(self, action: #selector(pointBtnClick), for: .touchUpInside)
-        
-        keyboardView.addSubview(pointBtn)
-        
         // 正负号
-        let signBtn = UIButton(title: "+/-")
+        let signBtn = UIButton(title: "+/-", textFontSize: 25)
         
-        signBtn.frame = CGRect(x: 2 * btnWidth, y: 0, width: btnWidth, height: btnHeight)
+        signBtn.frame = CGRect(x: 2 * btnWidth, y: 4 * btnHeight, width: btnWidth, height: btnHeight)
         
         keyboardView.addSubview(signBtn)
     }
@@ -420,13 +451,23 @@ extension HomeViewController {
         
         keyboardView.addSubview(backspaceBtn)
         
-        // 括号
-        let bracketsBtn = UIButton(title: "( )")
+        // 左括号
+        let leftBracketBtn = UIButton(title: "(")
         
-        bracketsBtn.frame = CGRect(x: btnWidth, y: 0, width: btnWidth, height: btnHeight)
-        bracketsBtn.addTarget(self, action: #selector(bracketsBtnClick), for: .touchUpInside)
+        leftBracketBtn.frame = CGRect(x: btnWidth, y: 0, width: btnWidth, height: btnHeight)
+        leftBracketBtn.addTarget(self, action: #selector(bracketsBtnClick(btn:)), for: .touchUpInside)
+        leftBracketBtn.tag = 1
         
-        keyboardView.addSubview(bracketsBtn)
+        keyboardView.addSubview(leftBracketBtn)
+        
+        // 右括号
+        let rightBracketBtn = UIButton(title: ")")
+        
+        rightBracketBtn.frame = CGRect(x: 2 * btnWidth, y: 0, width: btnWidth, height: btnHeight)
+        rightBracketBtn.addTarget(self, action: #selector(bracketsBtnClick(btn:)), for: .touchUpInside)
+        rightBracketBtn.tag = 2
+        
+        keyboardView.addSubview(rightBracketBtn)
     }
     
     private func setupTextView() {

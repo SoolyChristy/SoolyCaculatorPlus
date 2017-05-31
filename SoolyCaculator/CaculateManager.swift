@@ -89,4 +89,42 @@ struct CaculateManager {
         
         return result
     }
+    
+    /// 计算括号里的内容
+    ///
+    /// - Parameters:
+    ///   - operators: 操作符
+    ///   - numbers: 操作数
+    ///   - bracketIndex:  需计算括号的索引
+    ///   - bracketCount: 括号对数
+    func caculateBracketContents(operators: inout [String],
+                                 numbers: inout [NSDecimalNumber],
+                                 bracketIndex: Int,
+                                 bracketCount: Int)
+    {
+        let rightBracketIndex = operators.count - 1
+        let operatorCount = rightBracketIndex - bracketIndex - 1
+        
+        let numberIndex = bracketIndex - bracketCount + 1
+        let numberCount = operatorCount + 1
+        
+        // 获取括号内的操作数、操作符
+        var bracketNumbers = (numbers as NSArray).subarray(with: NSRange(location: numberIndex, length: numberCount)) as! [NSDecimalNumber]
+        var bracketOperators = (operators as NSArray).subarray(with: NSRange(location: bracketIndex + 1, length: operatorCount)) as! [String]
+        
+        print("括号内 数字 - \(bracketNumbers)")
+        print("括号内 符号 - \(bracketOperators)")
+        
+        let result = caculateSystem(operators: &bracketOperators, numbers: &bracketNumbers)
+        
+        // 计算结束后移除 括号内的 操作数 以及 操作符
+        numbers.removeSubrange(numberIndex...numberIndex + numberCount - 1)
+        operators.removeSubrange(bracketIndex...rightBracketIndex)
+        
+        // 添加计算结果
+        numbers.append(result)
+        
+        print("括号计算完成后 数字 - \(numbers)")
+        print("删除计算完成 符号 - \(operators)")
+    }
 }
