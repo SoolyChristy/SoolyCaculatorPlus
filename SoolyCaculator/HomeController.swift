@@ -4,38 +4,38 @@
 //
 //  Created by SoolyChristina on 2017/5/27.
 //  Copyright © 2017年 SoolyChristina. All rights reserved.
-//  界面 + 交互
+//  
 
 import UIKit
 
 class HomeViewController: UIViewController {
-
+    
     lazy var textView = UITextView()
     lazy var keyboardView = UIView()
     
     /// 当前数字
-    var currentNum: String = ""
+    var currentNum = ""
     /// 当前显示文本
-    var displayString: String = ""
+    var displayString = ""
     /// 操作数
-    var numbers: [Double] = [Double]()
+    var numbers = [NSDecimalNumber]()
     /// 操作符
-    var operators: [String] = [String]()
+    var operators = [String]()
     /// 运算结果
-    var result: Double = 0
+    var result: NSDecimalNumber = 0
     /// MS
-    var memmory: Double?
+    var memmory: NSDecimalNumber?
     
     var bracketCount = 0
-    var isFinishCaculate: Bool = false
-    var isDeleting: Bool = false
-    var isBracket: Bool = false
+    var isFinishCaculate = false
+    var isDeleting = false
+    var isBracket = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
     }
-
+    
     func cleanData() {
         numbers.removeAll()
         operators.removeAll()
@@ -50,7 +50,7 @@ class HomeViewController: UIViewController {
 
 // MARK: 监听方法
 fileprivate extension HomeViewController {
-
+    
     /// 点击功能键
     @objc func functionBtnClick(btn: UIButton) {
         guard let title = btn.titleLabel?.text else {
@@ -59,15 +59,62 @@ fileprivate extension HomeViewController {
         
         switch title {
         case "AC":
-            acClick()
+            
+            func acClick() {
+                currentNum = ""
+                displayString = ""
+                cleanData()
+                textView.text = displayString
+            }
         case "MS":
-            msClick()
+            
+            func msClick() {
+                if currentNum == "" {
+                    return
+                }
+                memmory = NSDecimalNumber(string: currentNum)
+                print("保存成功 - \(currentNum)")
+            }
         case "MR":
-            mrClick()
+            
+            func mrClick() {
+                guard let memory = memmory else {
+                    return
+                }
+                currentNum = "\(memory)"
+                displayString += currentNum
+                textView.text = displayString
+                print("读取成功 - \(currentNum)")
+            }
         case "M+":
-            mPlusClick()
+            
+            func mPlusClick() {
+                guard let memory = memmory else {
+                    return
+                }
+                let displayNum = NSDecimalNumber(string: currentNum)
+                if displayNum == NSDecimalNumber.notANumber {
+                    return
+                }
+                currentNum = memory.adding(displayNum).stringValue
+                displayString = currentNum
+                textView.text = displayString
+            }
         case "M-":
-            mMinusClick()
+            
+            func mMinusClick() {
+                guard let memory = memmory else {
+                    return
+                }
+                let displayNum = NSDecimalNumber(string: currentNum)
+                if displayNum == NSDecimalNumber.notANumber {
+                    return
+                }
+                
+                currentNum = memory.subtracting(displayNum).stringValue
+                displayString = currentNum
+                textView.text = displayString
+            }
         default:
             return
         }
@@ -80,7 +127,10 @@ fileprivate extension HomeViewController {
         }
         
         if isFinishCaculate {
-            acClick()
+            currentNum = ""
+            displayString = ""
+            cleanData()
+            textView.text = displayString
             return
         }
         
@@ -103,13 +153,13 @@ fileprivate extension HomeViewController {
                     print("删除后 当前数字 - \(currentNum)")
                     return
                 }
-                numbers.append(Double(currentNum)!)
+                numbers.append(NSDecimalNumber(string: currentNum))
             }
             
         } else {
             isDeleting = true
             operators.removeLast()
-            currentNum = "\(numbers.last!.doubleToIntegerString())"
+            currentNum = "\(numbers.last!.stringValue)"
             displayString.removeLastCharacter()
             textView.text = displayString
         }
@@ -121,7 +171,7 @@ fileprivate extension HomeViewController {
     
     /// 点击数字键
     @objc func numBtnClick(btn: UIButton) {
-       
+        
         if isFinishCaculate {
             isFinishCaculate = false
             
@@ -147,8 +197,8 @@ fileprivate extension HomeViewController {
             isFinishCaculate = false
             cleanData()
             
-            currentNum = result.doubleToIntegerString()
-            displayString = result.doubleToIntegerString()
+            currentNum = result.stringValue
+            displayString = result.stringValue
         }
         
         guard let title = btn.titleLabel?.text else {
@@ -156,7 +206,8 @@ fileprivate extension HomeViewController {
         }
         
         // 若当前数字为空 则替换已选择的符号
-        guard let number = Double(currentNum) else {
+        let number = NSDecimalNumber(string: currentNum)
+        if number == NSDecimalNumber.notANumber {
             
             if operators.count > 0 {
                 operators.removeLast()
@@ -166,6 +217,7 @@ fileprivate extension HomeViewController {
                 displayString += title
                 textView.text = displayString
             }
+            
             return
         }
         
@@ -217,7 +269,8 @@ fileprivate extension HomeViewController {
             
             bracketCount += 1
         }else if bracketCount == 1 {
-            guard let number = Double(currentNum) else {
+            let number = NSDecimalNumber(string: currentNum)
+            if number == NSDecimalNumber.notANumber {
                 return
             }
             
@@ -240,7 +293,8 @@ fileprivate extension HomeViewController {
             return
         }
         
-        guard let number = Double(currentNum) else {
+        let number = NSDecimalNumber(string: currentNum)
+        if number == NSDecimalNumber.notANumber {
             return
         }
         
@@ -249,10 +303,10 @@ fileprivate extension HomeViewController {
         }
         currentNum = ""
         
-        caculateSystem(operators: &operators, numbers: &numbers)
+        result = CaculateManager.shared.caculateSystem(operators: &operators, numbers: &numbers)
         
-        currentNum = result.doubleToIntegerString()
-        displayString += " = \(result.doubleToIntegerString())"
+        currentNum = result.stringValue
+        displayString += " = \(result.stringValue)"
         textView.text = displayString
         
         print("计算结束 结果为 - \(result)")
